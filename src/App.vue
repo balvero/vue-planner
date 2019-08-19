@@ -3,7 +3,8 @@
     <nav class="navbar is-white topNav">
       <div class="container">
         <div class="navbar-brand">
-          <h1>Activity Planner</h1>
+          <!-- <h1>{{watchedAppName}}</h1> -->
+          <h1>{{fullAppname}}</h1>
         </div>
       </div>
     </nav>
@@ -22,47 +23,14 @@
     <section class="container">
       <div class="columns">
         <div class="column is-3">
-          <a
-            v-if="!isFormDisplayed"
-            class="button is-primary is-block is-alt is-large"
-            href="#"
-            @click="toggleFormDisplay"
-          >New Activity</a>
-          <div class="create-form" v-if="isFormDisplayed">
-            <h2>Create Activity</h2>
-            <form>
-              <div class="field">
-                <label class="label">Title</label>
-                <div class="control">
-                  <input
-                    v-model="newActivity.title"
-                    class="input"
-                    type="text"
-                    placeholder="Activity Title"
-                  />
-                </div>
-              </div>
-              <div class="field">
-                <label for class="label">Notes</label>
-                <div class="control">
-                  <textarea class="textarea" placeholder="Notes" v-model="newActivity.notes"></textarea>
-                </div>
-              </div>
-              <div class="field is-grouped">
-                <div class="control">
-                  <button class="button is-link" @click="createActivity">Create Activity</button>
-                </div>
-                <div class="control">
-                  <button class="button is-text" @click="toggleFormDisplay">Cancel</button>
-                </div>
-              </div>
-            </form>
-          </div>
+          <ActivityCreate :categories="categories" />
         </div>
 
         <div class="column is-9">
           <div class="box content">
             <ActivityItem v-for="activity in activities" :activity="activity" :key="activity.id"></ActivityItem>
+            <div class="activity-length">Currently {{activityLength }} activities</div>
+            <div class="activity-motivation">{{activityMotivation}}</div>
           </div>
         </div>
       </div>
@@ -72,57 +40,65 @@
 
 <script>
 import ActivityItem from "./components/ActivityItem";
+import ActivityCreate from "./components/ActivityCreate";
+import { fetchActivities, fetchCategories, fetchUser } from "@/api";
 export default {
   name: "app",
-  components: { ActivityItem },
+  components: { ActivityItem, ActivityCreate },
   data() {
     return {
-      isFormDisplayed: false,
-      newActivity: { title: "", notes: "" },
+      creator: "Bernard",
+      appName: "Vue Planner",
+      watchedAppName: "Activity Planner by Bernard",
       message: "Hello Vue!",
       titleMessage: "Title Message Vue!!!!!",
       isTextDisplayed: true,
       items: [1, 2, 3, 4, 5],
-      user: {
-        name: "Filip Jerga",
-        id: "-Aj34jknvncx98812"
-      },
-      activities: {
-        "1546968934": {
-          id: 1,
-          title: "Learn Vue.js",
-          notes: "I started today and it was not good.",
-          progress: 0,
-          category: "1546969049",
-          createdAt: 1546969144391,
-          updatedAt: 1546969144391
-        },
-        "1546969212": {
-          id: 2,
-          title: "Read Witcher Books",
-          notes: "These books are super nice",
-          progress: 0,
-          category: "1546969049",
-          createdAt: 1546969144391,
-          updatedAt: 1546969144391
-        }
-      },
-      categories: {
-        "1546969049": { text: "books" },
-        "1546969225": { text: "movies" }
-      }
+      activities: {}
     };
   },
+  computed: {
+    fullAppname() {
+      return this.appName + " by " + this.creator;
+    },
+    activityLength() {
+      return Object.keys(this.activities).length;
+    },
+    activityMotivation() {
+      if (this.activityLength && this.activityLength < 5) {
+        return "Nice to see some goals :)";
+      } else if (this.activityLength >= 5) {
+        return "So many activities! Good Job!";
+      } else {
+        return "No activities, so sad...";
+      }
+    }
+  },
+  // watch: {
+  //   creator(val) {
+  //     this.watchedAppName = this.appName + " by " + val;
+  //   },
+  //   appName(val) {
+  //     this.watchedAppName = val + " by " + this.creator;
+  //   }
+  // },
   methods: {
     toggleTextDisplay() {
       this.isTextDisplayed = !this.isTextDisplayed;
     },
     toggleFormDisplay() {
       this.isFormDisplayed = !this.isFormDisplayed;
-    },
-    createActivity() {
-      console.log(this.newActivity);
     }
+
+    // isFormValid() {
+    //   return this.newActivity.title && this.newActivity.notes;
+    // }
+  },
+  beforeCreate() {},
+  created() {
+    this.activities = fetchActivities();
+    this.categories = fetchCategories();
+    this.user = fetchUser();
   }
 };
 </script>
@@ -144,6 +120,13 @@ footer {
   background-color: #f2f6fa !important;
 }
 
+.activity-motivation {
+  float: right;
+}
+
+.activity-length {
+  display: inline-block;
+}
 .example {
   margin-left: 30px;
 }

@@ -26,7 +26,13 @@
 <script>
 export default {
   name: "ActivityItem",
-  props: ["activity"]
+  // props: ["activity"],
+  props: {
+    activity: {
+      type: Object,
+      required: true
+    }
+  }
 };
 </script>
 
