@@ -8,29 +8,29 @@
         </div>
       </div>
     </nav>
-    <nav class="navbar is-white">
-      <div class="container">
-        <div class="navbar-menu">
-          <div class="navbar-start">
-            <a class="navbar-item is-active" href="#">Newest</a>
-            <a class="navbar-item" href="#">In Progress</a>
-            <a class="navbar-item" href="#">Finished</a>
-          </div>
-        </div>
-      </div>
-    </nav>
-
+    <NavBar />
     <section class="container">
       <div class="columns">
         <div class="column is-3">
-          <ActivityCreate :categories="categories" />
+          <ActivityCreate @activityCreated="addActivity" :categories="categories" />
         </div>
 
         <div class="column is-9">
-          <div class="box content">
-            <ActivityItem v-for="activity in activities" :activity="activity" :key="activity.id"></ActivityItem>
-            <div class="activity-length">Currently {{activityLength }} activities</div>
-            <div class="activity-motivation">{{activityMotivation}}</div>
+          <div class="box content" :class="{fetching: isFetching, 'has-error': error}">
+            <div v-if="error">{{error}}</div>
+            <div v-else>
+              <div v-if="isFetching">Loading...</div>
+              <ActivityItem
+                v-for="activity in activities"
+                :activity="activity"
+                :categories="categories"
+                :key="activity.id"
+              ></ActivityItem>
+            </div>
+            <div v-if="!isFetching">
+              <div class="activity-length">Currently {{activityLength }} activities</div>
+              <div class="activity-motivation">{{activityMotivation}}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -39,21 +39,23 @@
 </template>
 
 <script>
+import Vue from "vue";
 import ActivityItem from "./components/ActivityItem";
 import ActivityCreate from "./components/ActivityCreate";
+import NavBar from "./components/NavBar";
 import { fetchActivities, fetchCategories, fetchUser } from "@/api";
 export default {
   name: "app",
-  components: { ActivityItem, ActivityCreate },
+  components: { ActivityItem, ActivityCreate, NavBar },
   data() {
     return {
       creator: "Bernard",
       appName: "Vue Planner",
       watchedAppName: "Activity Planner by Bernard",
-      message: "Hello Vue!",
-      titleMessage: "Title Message Vue!!!!!",
+      isFetching: false,
+      error: null,
       isTextDisplayed: true,
-      items: [1, 2, 3, 4, 5],
+      user: {},
       activities: {}
     };
   },
@@ -83,11 +85,10 @@ export default {
   //   }
   // },
   methods: {
-    toggleTextDisplay() {
-      this.isTextDisplayed = !this.isTextDisplayed;
-    },
-    toggleFormDisplay() {
-      this.isFormDisplayed = !this.isFormDisplayed;
+    addActivity(newActivity) {
+      // console.log(newActivity);
+      // this.activities[newActivity.id] = newActivity;
+      Vue.set(this.activities, newActivity.id, newActivity);
     }
 
     // isFormValid() {
@@ -96,7 +97,16 @@ export default {
   },
   beforeCreate() {},
   created() {
-    this.activities = fetchActivities();
+    this.isFetching = true;
+    fetchActivities()
+      .then(activities => {
+        this.activities = activities;
+        this.isFetching = false;
+      })
+      .catch(err => {
+        this.error = err;
+        this.isFetching = false;
+      });
     this.categories = fetchCategories();
     this.user = fetchUser();
   }
@@ -118,6 +128,14 @@ body {
 }
 footer {
   background-color: #f2f6fa !important;
+}
+
+.fetching {
+  border: 2px solid orange;
+}
+
+.has-error {
+  border: 2px solid red;
 }
 
 .activity-motivation {
